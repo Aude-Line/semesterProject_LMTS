@@ -59,9 +59,18 @@ cd ~/semesterProject_LMTS
 ```
 
 ## Bridge
+### Bridge intro
+humble with upstream to be able to use bool patch -> less stable
+the bridge code was also modified to be able to use personal class tables (Joints[])
 
-Reference guide:
+The fp library was modified to generate readable ROS1 msg and srv, and a ROS2 side was implemented, with custom mapping rules
+
+with custom mapping rules the bridge needs to be recompiled, but as I modified it it needed to be recompiled anyway
+
+Reference guides:
 https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.html
+
+https://docs.ros.org/en/humble/p/ros1_bridge/doc/index.html
 
 ### 1) Install ROS1 core packages on Ubuntu 22.04 (Jammy)
 
@@ -98,18 +107,63 @@ cd ~/ros2_humble
 colcon build --symlink-install --packages-skip-build-finished
 ```
 
-as the build is really long and some library takes too much memory for WSL, if the build stops or is stuck try with this to build the problematics libraries
+as the build is really long (around 2h on my computer) and some library takes too much memory for WSL, if the build stops or is stuck try with this to build the problematics libraries
 
 ```bash
 MAKEFLAGS="-j1" colcon build --symlink-install --packages-skip-build-finished --executor sequential
 ```
 
-### Build the bridge
+## Build ros2 ws
+in a new shell
+```bash
+cd ~/semesterProject_LMTS/fp_bridge/ros2_ws
 
+source ~/ros2_humble/install/setup.bash
+
+colcon build
+```
+
+### Build the bridge
+in a clean shell
+Before building the bridge, install the ROS1 Python modules it imports:
+
+```bash
+sudo apt update
+sudo apt install -y python3-rosmsg python3-roslib python3-rospkg python3-catkin-pkg python3-genpy
+```
+
+Then build the bridge:
+
+```bash
+cd ~/semesterProject_LMTS/fp_bridge/bridge_ws
+
+source ~/semesterProject_LMTS/fp_bridge/ros1_ws/devel/setup.bash
+
+source ~/ros2_humble/install/setup.bash
+
+source /home/fleur/semesterProject_LMTS/fp_bridge/ros2_ws/install/setup.bash
+
+MAKEFLAGS="-j1" colcon build --packages-select ros1_bridge --cmake-force-configure --event-handlers console_direct+
+```
+
+### Offline check for `fp_core_msgs`
+
+Even if you do not have access to the ROS 1 robot, you can still inspect the bridge pair list and filter it to `fp_core_msgs` to check if the bridge compilation was sucessful:
+
+```bash
+source ~/semesterProject_LMTS/fp_bridge/ros1_ws/devel/setup.bash
+source ~/ros2_humble/install/local_setup.bash
+source ~/semesterProject_LMTS/fp_bridge/ros2_ws/install/local_setup.bash
+source ~/semesterProject_LMTS/fp_bridge/bridge_ws/install/local_setup.bash
+
+ros2 run ros1_bridge dynamic_bridge --print-pairs | grep fp_core_msgs
+```
+
+This only shows supported message pairs. It does not require the bridge to connect to the robot.
 
 ### Run steps for bridge
 
-TODO: Add exact runtime commands for your bridge nodes.
+See the runtime commands in the Run Code section below.
 
 ## ESP
 
@@ -118,4 +172,26 @@ TODO: Add run steps for `esp`.
 
 ## Run Code
 
-TODO: Add execution steps for bridge and ESP.
+### Bridge runtime
+
+In a new shell, source the same workspaces and point the bridge to the ROS 1 master:
+
+```bash
+cd
+
+source ~/semesterProject_LMTS/fp_bridge/ros1_ws/devel/setup.bash
+source ~/ros2_humble/install/local_setup.bash
+source ~/semesterProject_LMTS/fp_bridge/ros2_ws/install/local_setup.bash
+source ~/semesterProject_LMTS/fp_bridge/bridge_ws/install/local_setup.bash
+
+export ROS_MASTER_URI=http://10.0.0.203:11311
+export ROS_IP=172.23.10.4
+
+ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
+```
+
+If you see `Failed to contact master`, check that `ROS_MASTER_URI` points to the machine running ROS 1 and that `ROS_IP` matches this WSL instance.
+
+### ESP runtime
+
+TODO: Add execution steps for ESP.
