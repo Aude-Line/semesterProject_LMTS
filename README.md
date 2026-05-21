@@ -60,8 +60,56 @@ cd ~/semesterProject_LMTS
 
 ## Bridge
 
-TODO: Add build steps for `fp_bridge`.
-TODO: Add run steps for `fp_bridge`
+Reference guide:
+https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.html
+
+### 1) Install ROS1 core packages on Ubuntu 22.04 (Jammy)
+
+```bash
+sudo apt update
+sudo apt install -y ros-core-dev
+```
+
+Note: on Jammy with this setup, `/opt/ros/noetic` is not present. Do not run `source /opt/ros/noetic/setup.bash`.
+
+### 2) Install build tools (required for C++)
+
+```bash
+sudo apt update
+sudo apt install -y build-essential g++ cmake git
+```
+
+### 4) Build `ros1_ws`
+
+```bash
+cd ~/semesterProject_LMTS/fp_bridge/ros1_ws
+catkin_make
+```
+
+Expected result: CMake config completes and `make` runs without `No CMAKE_CXX_COMPILER could be found`.
+
+### 5) Download ROS2 humble from sources, compatiblel with ros1
+TODO: copy log file
+
+### 6) Build ROS2 humble
+open a new wsl terminal and type
+```bash
+cd ~/ros2_humble
+colcon build --symlink-install --packages-skip-build-finished
+```
+
+as the build is really long and some library takes too much memory for WSL, if the build stops or is stuck try with this to build the problematics libraries
+
+```bash
+MAKEFLAGS="-j1" colcon build --symlink-install --packages-skip-build-finished --executor sequential
+```
+
+### Build the bridge
+
+
+### Run steps for bridge
+
+TODO: Add exact runtime commands for your bridge nodes.
 
 ## ESP
 
