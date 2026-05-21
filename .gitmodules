@@ -4,3 +4,6 @@
 [submodule "esp"]
 	path = esp
 	url = https://github.com/Aude-Line/esp_c6.git
+[submodule "CAD_gripper"]
+	path = CAD_gripper
+	url = https://github.com/Aude-Line/CAD_gripper.git
