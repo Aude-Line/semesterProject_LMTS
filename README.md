@@ -37,6 +37,7 @@ Main folders:
 
 - `fp_bridge`: bridge code to connect to the robot ROS node (Git submodule)
 - `esp`: ESP code (Git submodule)
+- `CAD_gripper`: gripper CAD files (Git submodule)
 
 Clone the project with all submodules (including submodules inside submodules):
 
@@ -113,7 +114,7 @@ as the build is really long (around 2h on my computer) and some library takes to
 MAKEFLAGS="-j1" colcon build --symlink-install --packages-skip-build-finished --executor sequential
 ```
 
-## Build ros2 ws
+### Build ros2 ws
 in a new shell
 ```bash
 cd ~/semesterProject_LMTS/fp_bridge/ros2_ws
