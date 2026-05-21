@@ -1,0 +1,6 @@
+[submodule "fp_bridge"]
+	path = fp_bridge
+	url = https://github.com/Aude-Line/fp_bridge.git
+[submodule "esp"]
+	path = esp
+	url = https://github.com/Aude-Line/esp_c6.git
