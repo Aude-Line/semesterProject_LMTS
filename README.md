@@ -205,6 +205,72 @@ python3 gripper_ctrl.py
 
 ```
 
+### Run the unified gripper interface (ESP + robot services)
+
+This script publishes gripper commands to the ESP topic and also calls robot services
+(`connect`, `disconnect`, `home`, `gotarget`, `goplace`, etc.).
+
+Start a new terminal, source ROS2 and your robot workspace, then run:
+
+```bash
+source /home/fleur/ros2_humble/install/local_setup.bash
+
+# Workspace inside this repository (contains ros2_fp_core_msgs / PRob2R services)
+source /home/fleur/semesterProject_LMTS/fp_bridge/ros2_ws/install/local_setup.bash
+
+# Robot ROS1 master IP
+export ROS_MASTER_URI=http://10.0.0.203:11311
+
+# Set ROS IP as we are using ROS1 / ros1_bridge networking
+export ROS_IP=<your_wsl_ip_on_10.0.0.x>
+
+cd ~/semesterProject_LMTS
+python3 gripper_interface.py
+```
+
+Notes:
+- For ESP communication over micro-ROS (USB or Wi-Fi UDP), `ROS_IP` is usually not needed.
+- For ROS1/bridge communication with the robot master, set `ROS_MASTER_URI` and, if needed, `ROS_IP` to an IP reachable by the robot.
+- In WSL, `ROS_IP` can change between sessions; re-check with `hostname -I`.
+
+Get your available IPs:
+
+```bash
+# Quick list (space-separated)
+hostname -I
+
+# Detailed list by interface (recommended)
+ip -4 addr show
+```
+
+How to choose which IP to use for `ROS_IP`:
+- Choose your WSL IPv4 on the same subnet as the robot master (`10.0.0.203`), so usually `10.0.0.x`.
+- Do not use loopback (`127.0.0.1`) or Docker-only interfaces.
+- If multiple `10.0.0.x` addresses exist, test reachability and pick the one that can reach the robot:
+
+```bash
+ping -c 3 10.0.0.203
+```
+
+Example:
+
+```bash
+export ROS_IP=10.0.0.42
+```
+
+Typical command flow inside the interface:
+
+```text
+connect
+home
+target x y z angle
+gotarget
+open
+close
+disconnect
+q
+```
+
 ### Build and flash ESP
 Check if the USB is visible on WSL
 ```bash
