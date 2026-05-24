@@ -10,7 +10,7 @@ Main folders:
 
 - `fp_bridge`: bridge code to connect to the robot ROS node (Git submodule)
 - `esp`: ESP code (Git submodule)
-- `hardware`: gripper CAD files (Git submodule)
+- `hardware`: contains electronics, CAD file and mechanical setup
 
 Clone the project with all submodules (including submodules inside submodules):
 
