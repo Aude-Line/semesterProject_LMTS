@@ -3,7 +3,7 @@
 	url = https://github.com/Aude-Line/fp_bridge.git
 [submodule "esp"]
 	path = esp
-	url = https://github.com/Aude-Line/esp_c6.git
-[submodule "CAD_gripper"]
-	path = CAD_gripper
-	url = https://github.com/Aude-Line/CAD_gripper.git
+	url = https://github.com/Aude-Line/semesterProject_esp_c6
+[submodule "hardware"]
+	path = hardware
+	url = https://github.com/Aude-Line/semesterProject_hardware.git
