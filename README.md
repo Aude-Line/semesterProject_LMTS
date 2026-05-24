@@ -210,7 +210,24 @@ Check if the USB is visible on WSL
 ```bash
 ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
 ```
-TODO if nothing appears, bind the USB bus on powershell with administator rights
+If nothing appears, bind and attach the ESP USB device from **Windows PowerShell (Run as Administrator)**:
+
+```powershell
+usbipd list
+# Find the ESP busid (example: 1-5)
+usbipd bind --busid <BUSID>
+usbipd attach --wsl --busid <BUSID>
+```
+
+Notes:
+- `bind` is persistent, so you usually do it once per device.
+- `attach` is needed each time the device is re-plugged or after reboot.
+
+Then verify again in WSL:
+
+```bash
+ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+```
 
 Pull the docker image compatible with the microros component and link the docker files to the wsl files. 
 ```bash
