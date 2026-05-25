@@ -2,7 +2,7 @@
 
 ## Intro
 
-TODO: Add a short project overview.
+This repository contains the work carried out during a semester project in which a silicone gripper powered by an EHD pump was developed and mounted on a P-Rob3 robot. The robot and gripper were then integrated into ROS 2 to perform a pick-and-place task.
 
 ## Structure of This Repo
 
@@ -12,29 +12,14 @@ Main folders:
 - `esp`: ESP code (Git submodule)
 - `hardware`: contains electronics, CAD file and mechanical setup
 
-Clone the project with all submodules (including submodules inside submodules):
-
-```bash
-cd ~
-git clone --recurse-submodules https://github.com/Aude-Line/semesterProject_LMTS.git
-cd semesterProject_LMTS
-```
-
-If you already cloned without submodules:
-
-```bash
-git submodule update --init --recursive
-```
-
-Go to the repository root at any time:
-
-```bash
-cd ~/semesterProject_LMTS
-```
-
-## WSL Setup
+## Version compatibility
 
 This project is developed in WSL2 on Ubuntu 22.04.
+
+Robot context:
+
+The robot runs a `roscore` instance that provides the basic robot commands. Since this interface is based on ROS 1 rather than ROS 2, an additional compatibility layer had to be introduced using `ros1_bridge`.
+The `fp` library version compatible with the robot software (`myP` 1.4.4) was modified to generate readable ROS 1 messages and services. A ROS 2 side was then implemented with custom mapping rules.
 
 ROS / bridge context:
 
@@ -44,14 +29,23 @@ ROS / bridge context:
 
 The bridge code was also modified to be able to use personal class tables (Joints[])
 
-The fp library was modified to generate readable ROS1 msg and srv, and a ROS2 side was implemented, with custom mapping rules
-
 with custom mapping rules the bridge needs to be recompiled, but as I modified it it needed to be recompiled anyway
 
 Reference guides:
 https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.html
 
 https://docs.ros.org/en/humble/p/ros1_bridge/doc/index.html
+
+ESP context:
+
+The ESP-C6 dev board was selected because it was expected to be compatible with the micro-ROS component for ROS 2 Humble. During testing, we found that it was not fully compatible out of the box: the ESP-C6 does not include a floating-point unit (FPU), so the micro-ROS component had to be adapted accordingly.
+
+To avoid adding extra setup steps, prebuilt Docker images were used to run the micro-ROS agent and access ESP-IDF tooling.
+
+Reference guide:
+https://github.com/micro-ROS/micro_ros_espidf_component/tree/humble
+
+## WSL Setup
 
 TODO: install WSL and mode miroir
 
@@ -76,12 +70,35 @@ wsl --list --verbose
 ```
 Expected: the distro used for the project is on version `2`.
 
-## Build Setup Details
+## Clone project
 
-Build and setup details are kept in the sub-READMEs:
+Clone the project with all submodules (including submodules inside submodules) inside wsl:
 
-- `fp_bridge`: see `fp_bridge/README.md`
-- `esp`: see `esp/README.md`
+```bash
+cd ~
+git clone --recurse-submodules https://github.com/Aude-Line/semesterProject_LMTS.git
+cd semesterProject_LMTS
+```
+
+If you already cloned without submodules:
+
+```bash
+git submodule update --init --recursive
+```
+
+Go to the repository root at any time:
+
+```bash
+cd ~/semesterProject_LMTS
+```
+
+## Build and Setup Details
+
+Detailed build and setup instructions are provided in the sub-READMEs:
+
+- ROS 1 / ROS 2 installation and bridge build steps: see `fp_bridge/README.md`
+- ESP build and flashing steps: see `esp/README.md`
+- Electronics and mechanical setup: see `hardware/README.md`
 
 ## Run Code
 
