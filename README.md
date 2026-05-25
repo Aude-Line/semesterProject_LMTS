@@ -127,19 +127,32 @@ ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
 
 ### Terminal 2 - micro-ROS agent
 
-The agent must run in its own terminal to establish the connection between the ESP and the computer. Start the agent first, then power or reboot the ESP so the code on the ESP starts only after the agent is active.
+The agent must run in its own terminal to establish the connection between the ESP and the computer.
 
-if using usb connection:
+Then we assume that the code is already flashed on the esp (see `esp/README.md`) and chose the same connection method.
+
+#### USB connection
+
+If you are using a USB connection, first identify the correct USB port.
+
+Check which port is available. If no port is visible, re-attach the device from PowerShell as Administrator (see `esp/README.md`).
+```bash
+ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+```
+
+Then start the agent on the detected port (USB0 is a standard for wsl):
+```bash
+sudo docker run -it --rm --net=host --device=/dev/ttyUSB0 microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200 -v6
+```
+
+#### Wi-Fi connection
+
+If you are using a wireless connection, start the agent with UDP:
 ```bash
 sudo docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 8888 -v6
 ```
 
-if using wireless connection:
-```bash
-sudo docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 8888 -v6
-```
-
-With a wireless connection, you can open another terminal to monitor the ESP (see `esp/README.md`). With a USB connection, this is not possible because the UART is already used by the agent communication.
+With a wireless connection, you can open another terminal to monitor the ESP (see `esp/README.md`). With a USB connection, this is not possible because the UART is already being used by the agent. Make sure that both the esp and the host are on the same wifi.
 
 ### Terminal 3 - gripper interface
 
