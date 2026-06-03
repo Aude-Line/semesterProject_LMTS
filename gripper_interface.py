@@ -8,6 +8,7 @@ from ros2_fp_core_msgs.srv import MoveTool
 from ros2_fp_core_msgs.srv import MoveJoint
 from ros2_fp_core_msgs.srv import Initialize
 from ros2_fp_core_msgs.srv import Calibrate
+from ros2_fp_core_msgs.srv import InverseKinematics
 
 Z_CLEARANCE_MM = 100.0
 
@@ -20,9 +21,37 @@ class GripperInterface(Node):
 		self.place = None
 		self.move_tool_client = self.create_client(MoveTool, '/PRob2R/core/move_tool')
 		self.move_joint_client = self.create_client(MoveJoint, '/PRob2R/core/move_joint')
+		self.inverse_kinematics_client = self.create_client(InverseKinematics, '/PRob2R/core/inverse_kinematics')
 		self.connect_client = self.create_client(Initialize, '/PRob2R/core/connect')
 		self.disconnect_client = self.create_client(Trigger, '/PRob2R/core/disconnect')
 		self.calibrate_client = self.create_client(Calibrate, '/PRob2R/core/calibrate')
+
+	def is_reachable(self, position, position_name: str) -> bool:
+		if not self.inverse_kinematics_client.wait_for_service(timeout_sec=2.0):
+			print('InverseKinematics service unavailable: /PRob2R/core/inverse_kinematics')
+			return False
+
+		x, y, z, angle = position
+		req = InverseKinematics.Request()
+		req.x = float(x)
+		req.y = float(y)
+		req.z = float(z)
+		req.orientation = [180.0, 0.0, float(angle)]
+		req.previous_angles = []
+
+		future = self.inverse_kinematics_client.call_async(req)
+		rclpy.spin_until_future_complete(self, future)
+		resp = future.result()
+		if resp is None:
+			print(f'IK check failed for {position_name}: no response')
+			return False
+
+		if not resp.success:
+			print(f'IK check failed for {position_name}: {resp.message}')
+			return False
+
+		print(f'IK check OK for {position_name}. Joint angles: {list(resp.joint_angles)}')
+		return True
 
 	def publish_esp_value(self, value: int) -> None:
 		msg = Int32()
@@ -40,8 +69,8 @@ class GripperInterface(Node):
 		req.y = float(y)
 		req.z = float(z)
 		req.orientation = [] if orientation is None else [int(v) for v in orientation]
-		req.velocity = 10.0
-		req.acceleration = 20.0
+		req.velocity = 20.0
+		req.acceleration = 30.0
 		req.block = True
 		req.relative = relative
 		req.frame = 'tool' if relative else 'base'
@@ -103,7 +132,7 @@ class GripperInterface(Node):
 		return bool(resp.success)
 
 	def demo_move(self) -> None:
-		ok = self.move_tool(250.0, -250.0, 200.0, False, [180, 0, 0])
+		ok = self.move_tool(300.0, -300.0, 400.0, False, [180, 0, 0])
 		if not ok:
 			print('Demo move failed.')
 			return
@@ -115,8 +144,8 @@ class GripperInterface(Node):
 			return
 
 		req = MoveJoint.Request()
-		req.actuator_ids = [1, 2, 3, 4, 5, 6, 7]
-		req.position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+		req.actuator_ids = [1, 2, 3, 4, 5, 6]
+		req.position = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		req.velocity = 10.0
 		req.acceleration = 20.0
 		req.block = True
@@ -143,7 +172,7 @@ class GripperInterface(Node):
 		table_parallel_orientation = [180, 0, int(angle)]
 
 		# 1) Relative move: go up 10 cm from current position.
-		if not self.move_tool(0.0, 0.0, Z_CLEARANCE_MM, True, [0, 0, 0]):
+		if not self.move_tool(0.0, 0.0, -Z_CLEARANCE_MM, True, [0, 0, 0]):
 			print(f'go{position_name.capitalize()} stopped at step 1.')
 			return
 
@@ -173,7 +202,7 @@ def main() -> None:
 	print('Ready. Available commands:')
 	print('  connect             -> connect + calibrate (check response messages)')
 	print('  disconnect          -> disconnect robot session')
-	print('  demo                -> MoveTool to (250, -250, 200), [180, 0, 0] to fix the gripper on the robot')
+	print('  demo                -> MoveTool to (400, -400, 400), [180, 0, 0] to fix the gripper on the robot')
 	print('  home                -> put the robot in upright home position (all joints to 0)')
 	print('  open                -> publish 0 to esp32_rx_int32')
 	print('  close               -> publish 1 to esp32_rx_int32')
@@ -217,6 +246,10 @@ def main() -> None:
 					continue
 
 				coords = (x, y, z, angle)
+				if not node.is_reachable(coords, label):
+					print(f'{label.capitalize()} not saved (point unreachable by IK).')
+					continue
+
 				if label == 'target':
 					node.target = coords
 					print(f'Target saved in memory: {node.target}')

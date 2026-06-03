@@ -16,12 +16,12 @@ Main folders:
 
 This project is developed in WSL2 on Ubuntu 22.04.
 
-Robot context:
+### Robot context:
 
 The robot runs a `roscore` instance that provides the basic robot commands. Since this interface is based on ROS 1 rather than ROS 2, an additional compatibility layer had to be introduced using `ros1_bridge`.
 The `fp` library version compatible with the robot software (`myP` 1.4.4) was modified to generate readable ROS 1 messages and services. A ROS 2 side was then implemented with custom mapping rules.
 
-ROS / bridge context:
+### ROS / bridge context:
 
 - ROS 2 side: Humble built from sources on Ubuntu 22.04
 - ROS 1 side: `ros-core-dev` on Ubuntu 22.04 (Jammy upstream setup for `ros1_bridge`)
@@ -36,7 +36,7 @@ https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.ht
 
 https://docs.ros.org/en/humble/p/ros1_bridge/doc/index.html
 
-ESP context:
+### ESP context:
 
 The ESP-C6 dev board was selected because it was expected to be compatible with the micro-ROS component for ROS 2 Humble. During testing, we found that it was not fully compatible out of the box: the ESP-C6 does not include a floating-point unit (FPU), so the micro-ROS component had to be adapted accordingly.
 
