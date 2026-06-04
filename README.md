@@ -29,7 +29,7 @@ The `fp` library version compatible with the robot software (`myP` 1.4.4) was mo
 
 The bridge code was also modified to be able to use personal class tables (Joints[])
 
-with custom mapping rules the bridge needs to be recompiled, but as I modified it it needed to be recompiled anyway
+With custom mapping rules, the bridge needs to be recompiled; since it was already modified, it had to be recompiled anyway.
 
 Reference guides:
 https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.html
@@ -47,23 +47,49 @@ https://github.com/micro-ROS/micro_ros_espidf_component/tree/humble
 
 ## WSL Setup
 
-TODO: install WSL and mode miroir
+Reference guide: 
+https://learn.microsoft.com/en-us/windows/wsl/install
+https://learn.microsoft.com/en-us/windows/wsl/networking#mirrored-mode-networking
 
-### 1) Install a dedicated distro for this project (PowerShell)
+### 0) Install WSL
+
+### 1) Enable mirror mode networking (optional but recommended)
+
+Mirror mode makes WSL share the same network interfaces as Windows (same IP, LAN access, VPN compatibility). This fixed connection issues between WSL and the "outside" connections during the first tests (Robot, ESP).
+
+Create or edit the file `%USERPROFILE%\.wslconfig` on Windows:
+```powershell
+notepad "$env:USERPROFILE\.wslconfig"
+```
+
+```ini
+[wsl2]
+networkingMode=mirrored
+```
+
+Then restart WSL from PowerShell:
 
 ```powershell
-wsl --install Ubuntu-22.04 --name Ubuntu-22.04-semesterProject --version 2 --web-download
+wsl --shutdown
+```
+
+### 2) Install a dedicated distro for this project (PowerShell)
+This will create a new Ubuntu 22.04 instance named Ubuntu-22.04-fpRob; the name can be changed as you wish.
+
+```powershell
+wsl --install Ubuntu-22.04 --name Ubuntu-22.04-fpRob --version 2 --web-download
 ```
 
 During first launch, create your Linux user and set a password.
 
-### 2) Launch the project distro (PowerShell)
+### 3) Launch the project distro (PowerShell)
+use the name set at the last step
 
 ```powershell
-wsl -d Ubuntu-22.04-semesterProject
+wsl -d Ubuntu-22.04-fpRob
 ```
 
-### 3) Verify WSL version (PowerShell)
+### 4) Verify WSL version (PowerShell)
 
 ```powershell
 wsl --list --verbose
@@ -104,12 +130,23 @@ Detailed build and setup instructions are provided in the sub-READMEs:
 
 This section assumes that all builds are already done, all the connections are working, and the file is already uploaded on the ESP.
 
-Open the terminals in this order.
+Open the terminals in this order. If nothing is specified, consider that the terminal is a WSL instance. Don't forget to start the right WSL instance.
 
-remainder in case you forgot your IP use
+Reminder: the IP address of your Linux distribution installed via WSL 2 is obtained in a wsl environment via
 ```bash
 hostname -I
 ```
+
+or in a windows terminal
+```bash
+wsl hostname -I
+```
+
+Two network constraints drive the required setup:
+- The robot only accepts connections from a computer on the EPFL Wi-Fi.
+- The ESP cannot connect to the EPFL Wi-Fi (incompatible authentication protocol), but works fine on other networks (home Wi-Fi, 5G hotspot).
+
+Since both constraints cannot be satisfied over Wi-Fi simultaneously, **the ESP must communicate with the computer via USB**, and **the robot must communicate with the computer via Ethernet**, while the computer remains connected to the EPFL Wi-Fi.
 
 ### Terminal 1 - ROS1 bridge
 The bridge needs to run (in its own terminal) to allows the connection between the computer and the ROS1 node on the robot
@@ -129,30 +166,30 @@ ros2 run ros1_bridge dynamic_bridge --bridge-all-topics
 
 The agent must run in its own terminal to establish the connection between the ESP and the computer.
 
-Then we assume that the code is already flashed on the esp (see `esp/README.md`) and chose the same connection method.
+This assumes that the code is already flashed on the ESP (see `esp/README.md`) using the same connection method.
 
 #### USB connection
 
-If you are using a USB connection, first identify the correct USB port.
+First identify the correct USB port.
 
-Check which port is available. If no port is visible, re-attach the device from PowerShell as Administrator (see `esp/README.md`).
+Check which port is available. 
 ```bash
 ls -l /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
 ```
+
+If no port is visible, re-attach the device from PowerShell as Administrator (see `esp/README.md` for full pipe line). This needs to be done every time the usb is disconnected.
+```powershell
+usbipd list
+```
+```powershell
+usbipd attach --wsl --busid <BUSID>
+```
+
 
 Then start the agent on the detected port (USB0 is a standard for wsl):
 ```bash
 sudo docker run -it --rm --net=host --device=/dev/ttyUSB0 microros/micro-ros-agent:humble serial --dev /dev/ttyUSB0 -b 115200 -v6
 ```
-
-#### Wi-Fi connection
-
-If you are using a wireless connection, start the agent with UDP:
-```bash
-sudo docker run -it --rm --net=host microros/micro-ros-agent:humble udp4 --port 8888 -v6
-```
-
-With a wireless connection, you can open another terminal to monitor the ESP (see `esp/README.md`). With a USB connection, this is not possible because the UART is already being used by the agent. Make sure that both the esp and the host are on the same wifi.
 
 ### Terminal 3 - gripper interface
 
@@ -178,9 +215,23 @@ Typical command flow inside the interface:
 connect
 home
 target x y z angle
+place x y z angle
 gotarget
+goplace
 open
 close
 disconnect
 q
 ```
+
+Both `target` and `place` use the same parameters:
+x, y, z position in mm in the robot frame. The angle is the orientation of the tool in degrees. It takes only one angle as a parameter, as the other two axes are forced to be parallel to the table.
+
+`gotarget` is a movement command. It first moves up slightly from the current position, then moves above the set target, then moves down to reach it. `goplace` works on the same principle, but for the place point.
+Note: this version does not account for joint limits and blindly trusts the robot's embedded controller. For some positions, normally generated trajectories may reach the joint limits; the embedded controller still performs the move, but by first putting the robot in an upward position. Test the trajectories and use small ones for safety.
+
+Example that worked well:
+target -320 -210 160 -70
+place -10 -400 200 -90
+
+Don't forget to call `home` to put the robot in the upward position before calling `disconnect`, so the robot doesn't fall.
