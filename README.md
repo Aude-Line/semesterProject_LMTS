@@ -32,9 +32,12 @@ The bridge code was also modified to be able to use personal class tables (Joint
 With custom mapping rules, the bridge needs to be recompiled; since it was already modified, it had to be recompiled anyway.
 
 Reference guides:
+
 https://docs.ros.org/en/humble/How-To-Guides/Using-ros1_bridge-Jammy-upstream.html
 
 https://docs.ros.org/en/humble/p/ros1_bridge/doc/index.html
+
+https://docs.ros.org/en/humble/Installation/Alternatives/Ubuntu-Development-Setup.html
 
 ### ESP context:
 
@@ -43,12 +46,19 @@ The ESP-C6 dev board was selected because it was expected to be compatible with 
 To avoid adding extra setup steps, prebuilt Docker images were used to run the micro-ROS agent and access ESP-IDF tooling.
 
 Reference guide:
+
+https://docs.espressif.com/projects/esp-dev-kits/en/latest/esp32c6/esp32-c6-devkitm-1/user_guide.html
+
 https://github.com/micro-ROS/micro_ros_espidf_component/tree/humble
+
+https://hub.docker.com/r/espressif/idf
 
 ## WSL Setup
 
 Reference guide: 
+
 https://learn.microsoft.com/en-us/windows/wsl/install
+
 https://learn.microsoft.com/en-us/windows/wsl/networking#mirrored-mode-networking
 
 ### 0) Install WSL
